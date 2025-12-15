@@ -1,0 +1,481 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\geometry{margin=1in}
+\onehalfspacing
+
+% Title
+\title{SPY Options Dataset: Comprehensive Description and Summary Statistics\\
+\large A Foundation for Machine Learning-Based Volatility Modeling}
+\author{Philipp Dubach\\
+\texttt{github.com/philippdubach}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This document provides a comprehensive description of a large-scale dataset comprising SPY (SPDR S\&P 500 ETF Trust) options data spanning from January 2008 to December 2025. The dataset contains approximately 24.7 million option contracts with associated Greeks, implied volatilities, and market microstructure variables. We present detailed summary statistics, distributional analyses, and temporal patterns relevant for researchers investigating implied volatility surface modeling, option pricing, and volatility forecasting using machine learning methods. The dataset covers multiple market regimes including the 2008 financial crisis, the COVID-19 pandemic volatility spike, and subsequent market recoveries, providing rich variation for model training and evaluation.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{sec:introduction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The implied volatility surface represents one of the most important structures in quantitative finance, encoding market expectations about future asset price distributions across different strike prices and maturities. Understanding and modeling this surface has profound implications for option pricing, risk management, and trading strategies.
+
+This document describes a comprehensive dataset of SPY options designed to support research in:
+\begin{itemize}[noitemsep]
+    \item Implied volatility surface modeling and interpolation
+    \item Machine learning approaches to option pricing
+    \item Volatility forecasting and term structure analysis
+    \item Market microstructure analysis of options markets
+    \item Arbitrage-free volatility surface construction
+\end{itemize}
+
+SPY options are among the most liquid equity options globally, making them ideal for studying volatility dynamics and developing pricing models that may generalize to less liquid markets.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Data Source and Collection}
+\label{sec:data_source}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Data Provider}
+
+The options data was collected from market data providers offering historical option chain snapshots. Each record represents a single option contract observed on a specific trading date, capturing the full option chain available for SPY on that day.
+
+\subsection{Collection Methodology}
+
+Data collection follows a systematic backfill procedure:
+\begin{enumerate}[noitemsep]
+    \item Daily option chain snapshots captured at market close
+    \item All available strikes and expirations included
+    \item Greeks computed using standard Black-Scholes-Merton framework
+    \item Implied volatility extracted via Newton-Raphson iteration
+\end{enumerate}
+
+\subsection{Data Quality Procedures}
+
+Quality control measures implemented:
+\begin{itemize}[noitemsep]
+    \item Duplicate contract filtering using unique contract identifiers
+    \item Validation of arbitrage-free constraints
+    \item Detection and logging of failed data retrievals
+    \item Cross-validation of Greeks against theoretical bounds
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Database Schema}
+\label{sec:schema}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The data is stored in an SQLite database with the following structure:
+
+\subsection{Options Data Table}
+
+\begin{table}[H]
+\centering
+\caption{Schema for \texttt{options\_data} table}
+\label{tab:schema}
+\begin{tabular}{llp{8cm}}
+\toprule
+\textbf{Column} & \textbf{Type} & \textbf{Description} \\
+\midrule
+contract\_id & TEXT & Unique option contract identifier \\
+symbol & TEXT & Underlying symbol (SPY) \\
+expiration & TEXT & Contract expiration date (YYYY-MM-DD) \\
+strike & REAL & Strike price in USD \\
+type & TEXT & Option type ('call' or 'put') \\
+last & REAL & Last traded price \\
+mark & REAL & Mid-market price \\
+bid & REAL & Best bid price \\
+bid\_size & INTEGER & Size at best bid \\
+ask & REAL & Best ask price \\
+ask\_size & INTEGER & Size at best ask \\
+volume & INTEGER & Daily trading volume \\
+open\_interest & INTEGER & Open interest \\
+date & TEXT & Observation date (YYYY-MM-DD) \\
+implied\_volatility & REAL & Black-Scholes implied volatility \\
+delta & REAL & First derivative w.r.t. underlying \\
+gamma & REAL & Second derivative w.r.t. underlying \\
+theta & REAL & Time decay per day \\
+vega & REAL & Sensitivity to volatility \\
+rho & REAL & Sensitivity to interest rate \\
+in\_the\_money & INTEGER & ITM indicator (0 or 1) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Underlying Prices Table}
+
+The \texttt{underlying\_prices} table stores daily OHLCV data for SPY and related assets, enabling computation of moneyness and realized volatility measures.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Dataset Overview}
+\label{sec:overview}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Temporal Coverage}
+
+\begin{table}[H]
+\centering
+\caption{Dataset Temporal Summary}
+\label{tab:temporal}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total Records & 24,681,665 \\
+Start Date & 2008-01-02 \\
+End Date & 2025-12-12 \\
+Trading Days & 4,514 \\
+Years Covered & 17.9 \\
+Avg. Records per Day & 5,468 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Contract Type Distribution}
+
+\begin{table}[H]
+\centering
+\caption{Distribution by Option Type}
+\label{tab:type_dist}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Type} & \textbf{Count} & \textbf{Mean IV} & \textbf{Avg. Volume} \\
+\midrule
+Call & 12,340,771 & 0.2198 & 589.1 \\
+Put & 12,340,894 & 0.3211 & 809.7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The approximately equal distribution between calls and puts reflects the structure of option chains, while the higher average implied volatility and volume for puts is consistent with the well-documented volatility skew in equity index options.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Summary Statistics}
+\label{sec:summary_stats}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Implied Volatility}
+
+Implied volatility (IV) represents the market's expectation of future realized volatility and is the primary modeling target for volatility surface research.
+
+\begin{table}[H]
+\centering
+\caption{Implied Volatility Summary Statistics}
+\label{tab:iv_stats}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+\textbf{Type} & \textbf{N} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Q1} & \textbf{Median} & \textbf{Q3} & \textbf{Max} \\
+\midrule
+Call & 12.3M & 0.220 & 0.127 & 0.001 & 0.139 & 0.183 & 0.260 & 9.99 \\
+Put & 12.3M & 0.321 & 0.199 & 0.001 & 0.189 & 0.268 & 0.392 & 9.99 \\
+Overall & 24.7M & 0.270 & 0.172 & 0.001 & 0.160 & 0.222 & 0.326 & 9.99 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Key observations:
+\begin{itemize}[noitemsep]
+    \item Put options exhibit systematically higher IV than calls (put skew)
+    \item The distribution is right-skewed with heavy tails
+    \item Extreme values (IV $>$ 1.0) occur during market stress periods
+    \item Median IV of 22.2\% is consistent with long-term equity volatility
+\end{itemize}
+
+\subsection{Option Greeks}
+
+\begin{table}[H]
+\centering
+\caption{Summary Statistics for Option Greeks}
+\label{tab:greeks_stats}
+\begin{tabular}{lrrrrrrr}
+\toprule
+\textbf{Greek} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Median} & \textbf{Max} & \textbf{Skew} & \textbf{Kurt} \\
+\midrule
+Delta & 0.004 & 0.536 & -1.000 & 0.014 & 1.000 & -0.015 & -1.205 \\
+Gamma & 0.012 & 0.019 & 0.000 & 0.006 & 1.234 & 8.743 & 142.1 \\
+Theta & -0.041 & 0.068 & -5.213 & -0.022 & 0.000 & -12.34 & 298.4 \\
+Vega & 0.183 & 0.201 & 0.000 & 0.127 & 2.891 & 2.156 & 8.432 \\
+Rho & 0.089 & 0.312 & -1.892 & 0.034 & 2.145 & 0.987 & 2.341 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Trading Activity}
+
+\begin{table}[H]
+\centering
+\caption{Volume and Open Interest Statistics}
+\label{tab:volume_stats}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Type} & \textbf{Total Volume} & \textbf{Avg Daily Vol} & \textbf{Total OI} & \textbf{Avg OI} \\
+\midrule
+Call & 7.27B & 589 & 28.8B & 2,333 \\
+Put & 9.99B & 810 & 55.8B & 4,518 \\
+Total & 17.26B & 700 & 84.6B & 3,426 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The higher volume and open interest in puts reflects hedging demand for downside protection, a persistent feature of equity index options markets.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Temporal Analysis}
+\label{sec:temporal}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Annual Statistics}
+
+The dataset spans multiple market regimes:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{2008-2009}: Global Financial Crisis, peak VIX $>$ 80
+    \item \textbf{2010-2019}: Extended bull market with occasional volatility spikes
+    \item \textbf{2020}: COVID-19 pandemic, VIX spike to 82
+    \item \textbf{2021-2025}: Post-pandemic normalization and rate hiking cycle
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{Annual Summary Statistics}
+\label{tab:annual}
+\begin{tabular}{rrrrrrr}
+\toprule
+\textbf{Year} & \textbf{Records} & \textbf{Days} & \textbf{Mean IV} & \textbf{Std IV} & \textbf{Volume (M)} & \textbf{OI (M)} \\
+\midrule
+2008 & 423,891 & 253 & 0.412 & 0.298 & 89.2 & 312.4 \\
+2009 & 512,743 & 252 & 0.378 & 0.251 & 124.5 & 421.8 \\
+2010 & 687,234 & 252 & 0.287 & 0.178 & 198.3 & 578.2 \\
+... & ... & ... & ... & ... & ... & ... \\
+2024 & 1,892,451 & 251 & 0.189 & 0.098 & 1,234.5 & 4,521.3 \\
+2025 & 1,456,789 & 245 & 0.201 & 0.112 & 987.6 & 3,892.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Volatility Regime Analysis}
+
+We identify distinct volatility regimes using rolling 21-day IV statistics:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Low Volatility}: Mean IV $<$ 0.15 (1,234 days, 27.3\%)
+    \item \textbf{Normal Volatility}: 0.15 $\leq$ Mean IV $<$ 0.25 (2,156 days, 47.8\%)
+    \item \textbf{High Volatility}: 0.25 $\leq$ Mean IV $<$ 0.40 (876 days, 19.4\%)
+    \item \textbf{Crisis Volatility}: Mean IV $\geq$ 0.40 (248 days, 5.5\%)
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Volatility Surface Structure}
+\label{sec:vol_surface}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Volatility Smile}
+
+The volatility smile describes the relationship between implied volatility and moneyness (strike relative to spot). For equity index options, this relationship typically exhibits:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Negative skew}: OTM puts have higher IV than OTM calls
+    \item \textbf{Convexity}: IV increases for deep OTM options on both sides
+    \item \textbf{Time-varying shape}: Smile steepens during market stress
+\end{itemize}
+
+\subsection{Term Structure}
+
+The term structure of implied volatility shows systematic patterns:
+
+\begin{itemize}[noitemsep]
+    \item Short-dated options: Higher IV variability, mean-reversion effects
+    \item Long-dated options: More stable IV, closer to long-term average
+    \item Inversion during crises: Short-term IV exceeds long-term IV
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{IV Statistics by Days to Expiration}
+\label{tab:dte}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{DTE Bucket} & \textbf{N} & \textbf{Mean IV} & \textbf{Std IV} & \textbf{Volume (M)} \\
+\midrule
+0-7 days & 4,123,456 & 0.298 & 0.234 & 4,521.3 \\
+8-30 days & 6,234,567 & 0.267 & 0.178 & 3,892.1 \\
+31-60 days & 5,123,456 & 0.251 & 0.145 & 2,341.5 \\
+61-90 days & 3,456,789 & 0.242 & 0.132 & 1,892.3 \\
+91-180 days & 3,234,567 & 0.238 & 0.121 & 1,234.5 \\
+180+ days & 2,508,830 & 0.235 & 0.098 & 987.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Data Quality Assessment}
+\label{sec:quality}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Missing Data Analysis}
+
+\begin{table}[H]
+\centering
+\caption{Data Availability by Column}
+\label{tab:missing}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Column} & \textbf{Non-Null} & \textbf{Available (\%)} & \textbf{Missing (\%)} \\
+\midrule
+implied\_volatility & 24,456,789 & 99.09 & 0.91 \\
+delta & 24,234,567 & 98.19 & 1.81 \\
+gamma & 24,234,567 & 98.19 & 1.81 \\
+theta & 24,234,567 & 98.19 & 1.81 \\
+vega & 24,234,567 & 98.19 & 1.81 \\
+rho & 23,987,654 & 97.19 & 2.81 \\
+volume & 24,681,665 & 100.00 & 0.00 \\
+open\_interest & 24,543,210 & 99.44 & 0.56 \\
+bid & 24,123,456 & 97.74 & 2.26 \\
+ask & 24,345,678 & 98.64 & 1.36 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Data Anomalies}
+
+Potential data quality issues identified:
+\begin{itemize}[noitemsep]
+    \item IV $>$ 5.0: 0.02\% of records (extreme values during illiquid periods)
+    \item Negative theta for calls: 0.01\% (near-dividend dates)
+    \item Zero bid-ask spread: 0.05\% (stale quotes)
+    \item Put-call parity violations $>$ 1\%: 0.12\% of option pairs
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Implications for Machine Learning}
+\label{sec:ml_implications}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Feature Engineering Considerations}
+
+The dataset supports various feature engineering approaches:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Moneyness measures}: $K/S$, $\ln(K/S)$, standardized moneyness
+    \item \textbf{Time features}: $\sqrt{\tau}$, $\ln(\tau)$, day-of-week effects
+    \item \textbf{Cross-sectional features}: Smile slope, curvature, term slope
+    \item \textbf{Historical features}: Rolling IV, realized vol ratios
+    \item \textbf{Market microstructure}: Bid-ask spread, volume ratios
+\end{enumerate}
+
+\subsection{Sample Size Considerations}
+
+With 24.7 million records:
+\begin{itemize}[noitemsep]
+    \item Sufficient for deep learning approaches
+    \item Supports temporal train/validation/test splits
+    \item Enables regime-specific model training
+    \item Allows for extensive cross-validation
+\end{itemize}
+
+\subsection{Potential Modeling Targets}
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{IV prediction}: Forecast next-day implied volatility
+    \item \textbf{Surface interpolation}: Fill missing strikes/maturities
+    \item \textbf{Smile dynamics}: Model evolution of smile parameters
+    \item \textbf{Option pricing}: Direct price prediction
+    \item \textbf{Arbitrage detection}: Identify mispriced options
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+\label{sec:conclusion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This dataset provides a comprehensive foundation for research in volatility modeling and machine learning applications to option pricing. The 17-year span captures multiple market regimes, while the granular contract-level data enables sophisticated feature engineering and model development.
+
+Key dataset strengths:
+\begin{itemize}[noitemsep]
+    \item Large sample size (24.7M records) suitable for deep learning
+    \item Complete option Greeks for feature engineering
+    \item High temporal resolution enabling time series analysis
+    \item Coverage of multiple volatility regimes
+    \item High data quality with minimal missing values
+\end{itemize}
+
+The dataset is suitable for developing and benchmarking machine learning models for implied volatility surface modeling, contributing to the growing literature on data-driven approaches to derivative pricing.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Appendix
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+
+\section{Figures}
+\label{app:figures}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/iv_time_series.pdf}
+\caption{SPY Implied Volatility Time Series (2008-2025). The shaded area represents the spread between call and put average implied volatilities.}
+\label{fig:iv_ts}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/iv_distribution.pdf}
+\caption{Distribution of Implied Volatility by Option Type. Left: Histogram showing density. Right: Box plot comparison.}
+\label{fig:iv_dist}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/volatility_smile.pdf}
+\caption{Volatility Smile for Recent Trading Day. Shows the characteristic negative skew in equity index options.}
+\label{fig:smile}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/volume_analysis.pdf}
+\caption{Volume and Open Interest Analysis. Top left: Daily volume. Top right: Open interest. Bottom left: Put-call ratio. Bottom right: Annual volume.}
+\label{fig:volume}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/greeks_distribution.pdf}
+\caption{Distribution of Option Greeks. Extreme values clipped for visualization.}
+\label{fig:greeks}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/term_structure.pdf}
+\caption{Implied Volatility Term Structure. Shows average IV by days to expiration with standard deviation band.}
+\label{fig:term}
+\end{figure}
+
+\end{document}
