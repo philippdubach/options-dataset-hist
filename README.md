@@ -1,4 +1,4 @@
-# Historic Options Dataset
+# Historic Stock Options Dataset
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Data Format](https://img.shields.io/badge/Format-SQLite%20%7C%20Parquet-blue.svg)](#data-formats)
