@@ -23,8 +23,8 @@
 \onehalfspacing
 
 % Title
-\title{SPY Options Dataset: Comprehensive Description and Summary Statistics\\
-\large A Foundation for Machine Learning-Based Volatility Modeling}
+\title{Historic Options Dataset: Comprehensive Description and Summary Statistics\\
+\large SPY, IWM, and QQQ Options Data for Machine Learning-Based Volatility Modeling}
 \author{Philipp Dubach\\
 \texttt{github.com/philippdubach}}
 \date{\today}
@@ -34,7 +34,7 @@
 \maketitle
 
 \begin{abstract}
-This document provides a comprehensive description of a large-scale dataset comprising SPY (SPDR S\&P 500 ETF Trust) options data spanning from January 2008 to December 2025. The dataset contains approximately 24.7 million option contracts with associated Greeks, implied volatilities, and market microstructure variables. We present detailed summary statistics, distributional analyses, and temporal patterns relevant for researchers investigating implied volatility surface modeling, option pricing, and volatility forecasting using machine learning methods. The dataset covers multiple market regimes including the 2008 financial crisis, the COVID-19 pandemic volatility spike, and subsequent market recoveries, providing rich variation for model training and evaluation.
+This document provides a comprehensive description of a large-scale dataset comprising options data for three major U.S. equity ETFs: SPY (SPDR S\&P 500 ETF Trust), IWM (iShares Russell 2000 ETF), and QQQ (Invesco QQQ Trust, Nasdaq-100). The combined dataset contains over 53 million option contracts spanning from January 2008 to December 2025, with associated Greeks, implied volatilities, and market microstructure variables. We present detailed summary statistics, distributional analyses, and temporal patterns relevant for researchers investigating implied volatility surface modeling, option pricing, and volatility forecasting using machine learning methods. The dataset covers multiple market regimes including the 2008 financial crisis, the COVID-19 pandemic volatility spike, and subsequent market recoveries, providing rich variation for model training and evaluation.
 \end{abstract}
 
 \tableofcontents
@@ -47,16 +47,24 @@ This document provides a comprehensive description of a large-scale dataset comp
 
 The implied volatility surface represents one of the most important structures in quantitative finance, encoding market expectations about future asset price distributions across different strike prices and maturities. Understanding and modeling this surface has profound implications for option pricing, risk management, and trading strategies.
 
-This document describes a comprehensive dataset of SPY options designed to support research in:
+This document describes a comprehensive dataset of options on three major U.S. equity ETFs designed to support research in:
 \begin{itemize}[noitemsep]
     \item Implied volatility surface modeling and interpolation
     \item Machine learning approaches to option pricing
     \item Volatility forecasting and term structure analysis
     \item Market microstructure analysis of options markets
     \item Arbitrage-free volatility surface construction
+    \item Cross-asset volatility correlation studies
 \end{itemize}
 
-SPY options are among the most liquid equity options globally, making them ideal for studying volatility dynamics and developing pricing models that may generalize to less liquid markets.
+The dataset includes:
+\begin{itemize}[noitemsep]
+    \item \textbf{SPY}: S\&P 500 ETF Trust --- Large-cap U.S. equities
+    \item \textbf{IWM}: iShares Russell 2000 ETF --- Small-cap U.S. equities
+    \item \textbf{QQQ}: Invesco QQQ Trust --- Nasdaq-100 technology-focused equities
+\end{itemize}
+
+These three ETFs together provide exposure to different segments of the U.S. equity market, enabling comparative analysis of volatility behavior across market capitalizations and sector exposures.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Data Source and Collection}
@@ -65,7 +73,7 @@ SPY options are among the most liquid equity options globally, making them ideal
 
 \subsection{Data Provider}
 
-The options data was collected from market data providers offering historical option chain snapshots. Each record represents a single option contract observed on a specific trading date, capturing the full option chain available for SPY on that day.
+The options data was collected from market data providers offering historical option chain snapshots. Each record represents a single option contract observed on a specific trading date, capturing the full option chain available for each underlying on that day.
 
 \subsection{Collection Methodology}
 
@@ -92,7 +100,7 @@ Quality control measures implemented:
 \label{sec:schema}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-The data is stored in an SQLite database with the following structure:
+The data is stored in SQLite databases (one per underlying) with identical schemas.
 
 \subsection{Options Data Table}
 
@@ -105,7 +113,7 @@ The data is stored in an SQLite database with the following structure:
 \textbf{Column} & \textbf{Type} & \textbf{Description} \\
 \midrule
 contract\_id & TEXT & Unique option contract identifier \\
-symbol & TEXT & Underlying symbol (SPY) \\
+symbol & TEXT & Underlying symbol (SPY, IWM, or QQQ) \\
 expiration & TEXT & Contract expiration date (YYYY-MM-DD) \\
 strike & REAL & Strike price in USD \\
 type & TEXT & Option type ('call' or 'put') \\
@@ -131,19 +139,56 @@ in\_the\_money & INTEGER & ITM indicator (0 or 1) \\
 
 \subsection{Underlying Prices Table}
 
-The \texttt{underlying\_prices} table stores daily OHLCV data for SPY and related assets, enabling computation of moneyness and realized volatility measures.
+The \texttt{underlying\_prices} table stores daily OHLCV data for each underlying, enabling computation of moneyness and realized volatility measures.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Dataset Overview}
 \label{sec:overview}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Temporal Coverage}
+\subsection{Available Datasets}
 
 \begin{table}[H]
 \centering
-\caption{Dataset Temporal Summary}
-\label{tab:temporal}
+\caption{Dataset Summary}
+\label{tab:datasets}
+\begin{tabular}{llrrr}
+\toprule
+\textbf{Symbol} & \textbf{Description} & \textbf{Records} & \textbf{Trading Days} & \textbf{Period} \\
+\midrule
+SPY & SPDR S\&P 500 ETF Trust & 24,681,665 & 4,514 & 2008--2025 \\
+IWM & iShares Russell 2000 ETF & 13,379,573 & 4,509 & 2008--2025 \\
+QQQ & Invesco QQQ Trust (Nasdaq-100) & 15,345,882 & 3,700 & 2011--2025 \\
+\midrule
+\textbf{Total} & & \textbf{53,407,120} & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Market Regimes Covered}
+
+The dataset spans multiple distinct market regimes:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{2008-2009}: Global Financial Crisis, peak VIX $>$ 80
+    \item \textbf{2010-2019}: Extended bull market with occasional volatility spikes
+    \item \textbf{2020}: COVID-19 pandemic, VIX spike to 82
+    \item \textbf{2021-2025}: Post-pandemic normalization and rate hiking cycle
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{SPY Dataset}
+\label{sec:spy}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Overview}
+
+SPY (SPDR S\&P 500 ETF Trust) tracks the S\&P 500 Index and is one of the most liquid ETFs globally. SPY options are among the most actively traded equity options.
+
+\begin{table}[H]
+\centering
+\caption{SPY Dataset Summary}
+\label{tab:spy_summary}
 \begin{tabular}{lr}
 \toprule
 \textbf{Metric} & \textbf{Value} \\
@@ -153,224 +198,427 @@ Start Date & 2008-01-02 \\
 End Date & 2025-12-12 \\
 Trading Days & 4,514 \\
 Years Covered & 17.9 \\
-Avg. Records per Day & 5,468 \\
+Calls & 12,340,771 \\
+Puts & 12,340,894 \\
+Avg. Records per Day & 5,467 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Contract Type Distribution}
+\subsection{Implied Volatility Statistics}
 
 \begin{table}[H]
 \centering
-\caption{Distribution by Option Type}
-\label{tab:type_dist}
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Type} & \textbf{Count} & \textbf{Mean IV} & \textbf{Avg. Volume} \\
-\midrule
-Call & 12,340,771 & 0.2198 & 589.1 \\
-Put & 12,340,894 & 0.3211 & 809.7 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The approximately equal distribution between calls and puts reflects the structure of option chains, while the higher average implied volatility and volume for puts is consistent with the well-documented volatility skew in equity index options.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Summary Statistics}
-\label{sec:summary_stats}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\subsection{Implied Volatility}
-
-Implied volatility (IV) represents the market's expectation of future realized volatility and is the primary modeling target for volatility surface research.
-
-\begin{table}[H]
-\centering
-\caption{Implied Volatility Summary Statistics}
-\label{tab:iv_stats}
+\caption{SPY Implied Volatility Summary Statistics}
+\label{tab:spy_iv_stats}
 \begin{tabular}{lrrrrrrrr}
 \toprule
 \textbf{Type} & \textbf{N} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Q1} & \textbf{Median} & \textbf{Q3} & \textbf{Max} \\
 \midrule
-Call & 12.3M & 0.220 & 0.127 & 0.001 & 0.139 & 0.183 & 0.260 & 9.99 \\
-Put & 12.3M & 0.321 & 0.199 & 0.001 & 0.189 & 0.268 & 0.392 & 9.99 \\
-Overall & 24.7M & 0.270 & 0.172 & 0.001 & 0.160 & 0.222 & 0.326 & 9.99 \\
+Call & 12.3M & 0.220 & 0.320 & 0.015 & 0.103 & 0.161 & 0.239 & 9.995 \\
+Put & 12.3M & 0.321 & 0.319 & 0.015 & 0.181 & 0.249 & 0.366 & 9.995 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Volume and Open Interest}
+
+\begin{table}[H]
+\centering
+\caption{SPY Volume and Open Interest Statistics}
+\label{tab:spy_volume}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Type} & \textbf{Total Volume} & \textbf{Avg Volume} & \textbf{Total OI} & \textbf{Avg OI} \\
+\midrule
+Call & 7.27B & 589 & 28.8B & 2,333 \\
+Put & 9.99B & 810 & 55.8B & 4,518 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Greeks Statistics}
+
+\begin{table}[H]
+\centering
+\caption{SPY Option Greeks Summary}
+\label{tab:spy_greeks}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Greek} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Median} & \textbf{Max} \\
+\midrule
+Delta & 0.121 & 0.620 & -1.000 & 0.000 & 1.000 \\
+Gamma & 0.008 & 0.024 & 0.000 & 0.003 & 5.251 \\
+Theta & -0.054 & 0.134 & -24.719 & -0.025 & 3.393 \\
+Vega & 0.376 & 0.532 & 0.000 & 0.155 & 4.360 \\
+Rho & -0.028 & 1.568 & -166.894 & 0.000 & 11.352 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{SPY Figures}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/spy_iv_time_series.pdf}
+\caption{SPY Implied Volatility Time Series (2008-2025)}
+\label{fig:spy_iv_ts}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/spy_iv_distribution.pdf}
+\caption{SPY Implied Volatility Distribution by Option Type}
+\label{fig:spy_iv_dist}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/spy_volume_analysis.pdf}
+\caption{SPY Volume and Open Interest Analysis}
+\label{fig:spy_volume}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/spy_term_structure.pdf}
+\caption{SPY Implied Volatility Term Structure}
+\label{fig:spy_term}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/spy_volatility_smile.pdf}
+\caption{SPY Volatility Smile (Recent Trading Day)}
+\label{fig:spy_smile}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/spy_greeks_distribution.pdf}
+\caption{SPY Option Greeks Distribution}
+\label{fig:spy_greeks}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{IWM Dataset}
+\label{sec:iwm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Overview}
+
+IWM (iShares Russell 2000 ETF) tracks the Russell 2000 Index, providing exposure to small-cap U.S. equities. Small-cap stocks typically exhibit higher volatility than large-caps.
+
+\begin{table}[H]
+\centering
+\caption{IWM Dataset Summary}
+\label{tab:iwm_summary}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total Records & 13,379,573 \\
+Start Date & 2008-01-02 \\
+End Date & 2025-12-15 \\
+Trading Days & 4,509 \\
+Years Covered & 17.9 \\
+Calls & 6,689,698 \\
+Puts & 6,689,875 \\
+Avg. Records per Day & 2,967 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Implied Volatility Statistics}
+
+\begin{table}[H]
+\centering
+\caption{IWM Implied Volatility Summary Statistics}
+\label{tab:iwm_iv_stats}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+\textbf{Type} & \textbf{N} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Q1} & \textbf{Median} & \textbf{Q3} & \textbf{Max} \\
+\midrule
+Call & 6.7M & 0.255 & 0.331 & 0.015 & 0.130 & 0.195 & 0.283 & 9.995 \\
+Put & 6.7M & 0.345 & 0.320 & 0.015 & 0.206 & 0.279 & 0.395 & 9.995 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Volume and Open Interest}
+
+\begin{table}[H]
+\centering
+\caption{IWM Volume and Open Interest Statistics}
+\label{tab:iwm_volume}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Type} & \textbf{Total Volume} & \textbf{Avg Volume} & \textbf{Total OI} & \textbf{Avg OI} \\
+\midrule
+Call & 1.08B & 162 & 9.57B & 1,430 \\
+Put & 2.02B & 301 & 21.28B & 3,181 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Greeks Statistics}
+
+\begin{table}[H]
+\centering
+\caption{IWM Option Greeks Summary}
+\label{tab:iwm_greeks}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Greek} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Median} & \textbf{Max} \\
+\midrule
+Delta & 0.122 & 0.619 & -1.000 & 0.000 & 1.000 \\
+Gamma & 0.020 & 0.052 & 0.000 & 0.009 & 5.251 \\
+Theta & -0.022 & 0.054 & -5.820 & -0.011 & 3.393 \\
+Vega & 0.145 & 0.199 & 0.000 & 0.063 & 2.076 \\
+Rho & -0.003 & 0.283 & -13.152 & 0.000 & 2.076 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{IWM Figures}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/iwm_iv_time_series.pdf}
+\caption{IWM Implied Volatility Time Series (2008-2025)}
+\label{fig:iwm_iv_ts}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/iwm_iv_distribution.pdf}
+\caption{IWM Implied Volatility Distribution by Option Type}
+\label{fig:iwm_iv_dist}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/iwm_volume_analysis.pdf}
+\caption{IWM Volume and Open Interest Analysis}
+\label{fig:iwm_volume}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/iwm_term_structure.pdf}
+\caption{IWM Implied Volatility Term Structure}
+\label{fig:iwm_term}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/iwm_volatility_smile.pdf}
+\caption{IWM Volatility Smile (Recent Trading Day)}
+\label{fig:iwm_smile}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/iwm_greeks_distribution.pdf}
+\caption{IWM Option Greeks Distribution}
+\label{fig:iwm_greeks}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{QQQ Dataset}
+\label{sec:qqq}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Overview}
+
+QQQ (Invesco QQQ Trust) tracks the Nasdaq-100 Index, providing exposure to the largest non-financial companies listed on the Nasdaq, with heavy weighting toward technology stocks.
+
+\begin{table}[H]
+\centering
+\caption{QQQ Dataset Summary}
+\label{tab:qqq_summary}
+\begin{tabular}{lr}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total Records & 15,345,882 \\
+Start Date & 2011-03-23 \\
+End Date & 2025-12-15 \\
+Trading Days & 3,700 \\
+Years Covered & 14.7 \\
+Calls & 7,672,920 \\
+Puts & 7,672,962 \\
+Avg. Records per Day & 4,148 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Implied Volatility Statistics}
+
+\begin{table}[H]
+\centering
+\caption{QQQ Implied Volatility Summary Statistics}
+\label{tab:qqq_iv_stats}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+\textbf{Type} & \textbf{N} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Q1} & \textbf{Median} & \textbf{Q3} & \textbf{Max} \\
+\midrule
+Call & 7.7M & 0.267 & 0.345 & 0.015 & 0.121 & 0.188 & 0.299 & 9.995 \\
+Put & 7.7M & 0.342 & 0.317 & 0.015 & 0.187 & 0.271 & 0.403 & 9.995 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Volume and Open Interest}
+
+\begin{table}[H]
+\centering
+\caption{QQQ Volume and Open Interest Statistics}
+\label{tab:qqq_volume}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Type} & \textbf{Total Volume} & \textbf{Avg Volume} & \textbf{Total OI} & \textbf{Avg OI} \\
+\midrule
+Call & 3.59B & 468 & 13.93B & 1,816 \\
+Put & 4.09B & 533 & 22.70B & 2,960 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Greeks Statistics}
+
+\begin{table}[H]
+\centering
+\caption{QQQ Option Greeks Summary}
+\label{tab:qqq_greeks}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Greek} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Median} & \textbf{Max} \\
+\midrule
+Delta & 0.119 & 0.619 & -1.000 & 0.000 & 1.000 \\
+Gamma & 0.006 & 0.020 & 0.000 & 0.002 & 5.251 \\
+Theta & -0.080 & 0.185 & -27.181 & -0.035 & 3.393 \\
+Vega & 0.477 & 0.675 & 0.000 & 0.182 & 5.102 \\
+Rho & -0.064 & 2.236 & -179.893 & 0.000 & 18.125 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{QQQ Figures}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/qqq_iv_time_series.pdf}
+\caption{QQQ Implied Volatility Time Series (2011-2025)}
+\label{fig:qqq_iv_ts}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/qqq_iv_distribution.pdf}
+\caption{QQQ Implied Volatility Distribution by Option Type}
+\label{fig:qqq_iv_dist}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/qqq_volume_analysis.pdf}
+\caption{QQQ Volume and Open Interest Analysis}
+\label{fig:qqq_volume}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/qqq_term_structure.pdf}
+\caption{QQQ Implied Volatility Term Structure}
+\label{fig:qqq_term}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/qqq_volatility_smile.pdf}
+\caption{QQQ Volatility Smile (Recent Trading Day)}
+\label{fig:qqq_smile}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/qqq_greeks_distribution.pdf}
+\caption{QQQ Option Greeks Distribution}
+\label{fig:qqq_greeks}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Cross-Asset Comparison}
+\label{sec:comparison}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Implied Volatility Comparison}
+
+\begin{table}[H]
+\centering
+\caption{Cross-Asset Implied Volatility Comparison}
+\label{tab:iv_comparison}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Symbol} & \textbf{Mean IV (Call)} & \textbf{Mean IV (Put)} & \textbf{IV Skew} & \textbf{Median IV} \\
+\midrule
+SPY & 0.220 & 0.321 & 0.101 & 0.210 \\
+IWM & 0.255 & 0.345 & 0.090 & 0.234 \\
+QQQ & 0.267 & 0.342 & 0.075 & 0.227 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Key observations:
 \begin{itemize}[noitemsep]
-    \item Put options exhibit systematically higher IV than calls (put skew)
-    \item The distribution is right-skewed with heavy tails
-    \item Extreme values (IV $>$ 1.0) occur during market stress periods
-    \item Median IV of 22.2\% is consistent with long-term equity volatility
+    \item IWM (small-cap) exhibits the highest overall implied volatility, consistent with greater uncertainty in small-cap stocks
+    \item SPY shows the largest put-call IV skew (0.101), reflecting strong demand for downside protection on the broad market index
+    \item QQQ has the smallest IV skew (0.075), potentially due to technology sector characteristics
+    \item All three ETFs show the characteristic negative skew (puts more expensive than calls)
 \end{itemize}
 
-\subsection{Option Greeks}
+\subsection{Liquidity Comparison}
 
 \begin{table}[H]
 \centering
-\caption{Summary Statistics for Option Greeks}
-\label{tab:greeks_stats}
-\begin{tabular}{lrrrrrrr}
-\toprule
-\textbf{Greek} & \textbf{Mean} & \textbf{Std} & \textbf{Min} & \textbf{Median} & \textbf{Max} & \textbf{Skew} & \textbf{Kurt} \\
-\midrule
-Delta & 0.004 & 0.536 & -1.000 & 0.014 & 1.000 & -0.015 & -1.205 \\
-Gamma & 0.012 & 0.019 & 0.000 & 0.006 & 1.234 & 8.743 & 142.1 \\
-Theta & -0.041 & 0.068 & -5.213 & -0.022 & 0.000 & -12.34 & 298.4 \\
-Vega & 0.183 & 0.201 & 0.000 & 0.127 & 2.891 & 2.156 & 8.432 \\
-Rho & 0.089 & 0.312 & -1.892 & 0.034 & 2.145 & 0.987 & 2.341 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Trading Activity}
-
-\begin{table}[H]
-\centering
-\caption{Volume and Open Interest Statistics}
-\label{tab:volume_stats}
+\caption{Cross-Asset Liquidity Comparison}
+\label{tab:liquidity_comparison}
 \begin{tabular}{lrrrr}
 \toprule
-\textbf{Type} & \textbf{Total Volume} & \textbf{Avg Daily Vol} & \textbf{Total OI} & \textbf{Avg OI} \\
+\textbf{Symbol} & \textbf{Total Volume (B)} & \textbf{Avg Daily Vol} & \textbf{Total OI (B)} & \textbf{Records/Day} \\
 \midrule
-Call & 7.27B & 589 & 28.8B & 2,333 \\
-Put & 9.99B & 810 & 55.8B & 4,518 \\
-Total & 17.26B & 700 & 84.6B & 3,426 \\
+SPY & 17.26 & 700 & 84.6 & 5,467 \\
+IWM & 3.10 & 232 & 30.9 & 2,967 \\
+QQQ & 7.68 & 501 & 36.6 & 4,148 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The higher volume and open interest in puts reflects hedging demand for downside protection, a persistent feature of equity index options markets.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Temporal Analysis}
-\label{sec:temporal}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\subsection{Annual Statistics}
-
-The dataset spans multiple market regimes:
-
-\begin{itemize}[noitemsep]
-    \item \textbf{2008-2009}: Global Financial Crisis, peak VIX $>$ 80
-    \item \textbf{2010-2019}: Extended bull market with occasional volatility spikes
-    \item \textbf{2020}: COVID-19 pandemic, VIX spike to 82
-    \item \textbf{2021-2025}: Post-pandemic normalization and rate hiking cycle
-\end{itemize}
-
-\begin{table}[H]
-\centering
-\caption{Annual Summary Statistics}
-\label{tab:annual}
-\begin{tabular}{rrrrrrr}
-\toprule
-\textbf{Year} & \textbf{Records} & \textbf{Days} & \textbf{Mean IV} & \textbf{Std IV} & \textbf{Volume (M)} & \textbf{OI (M)} \\
-\midrule
-2008 & 423,891 & 253 & 0.412 & 0.298 & 89.2 & 312.4 \\
-2009 & 512,743 & 252 & 0.378 & 0.251 & 124.5 & 421.8 \\
-2010 & 687,234 & 252 & 0.287 & 0.178 & 198.3 & 578.2 \\
-... & ... & ... & ... & ... & ... & ... \\
-2024 & 1,892,451 & 251 & 0.189 & 0.098 & 1,234.5 & 4,521.3 \\
-2025 & 1,456,789 & 245 & 0.201 & 0.112 & 987.6 & 3,892.1 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Volatility Regime Analysis}
-
-We identify distinct volatility regimes using rolling 21-day IV statistics:
-
-\begin{enumerate}[noitemsep]
-    \item \textbf{Low Volatility}: Mean IV $<$ 0.15 (1,234 days, 27.3\%)
-    \item \textbf{Normal Volatility}: 0.15 $\leq$ Mean IV $<$ 0.25 (2,156 days, 47.8\%)
-    \item \textbf{High Volatility}: 0.25 $\leq$ Mean IV $<$ 0.40 (876 days, 19.4\%)
-    \item \textbf{Crisis Volatility}: Mean IV $\geq$ 0.40 (248 days, 5.5\%)
-\end{enumerate}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Volatility Surface Structure}
-\label{sec:vol_surface}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\subsection{Volatility Smile}
-
-The volatility smile describes the relationship between implied volatility and moneyness (strike relative to spot). For equity index options, this relationship typically exhibits:
-
-\begin{itemize}[noitemsep]
-    \item \textbf{Negative skew}: OTM puts have higher IV than OTM calls
-    \item \textbf{Convexity}: IV increases for deep OTM options on both sides
-    \item \textbf{Time-varying shape}: Smile steepens during market stress
-\end{itemize}
-
-\subsection{Term Structure}
-
-The term structure of implied volatility shows systematic patterns:
-
-\begin{itemize}[noitemsep]
-    \item Short-dated options: Higher IV variability, mean-reversion effects
-    \item Long-dated options: More stable IV, closer to long-term average
-    \item Inversion during crises: Short-term IV exceeds long-term IV
-\end{itemize}
-
-\begin{table}[H]
-\centering
-\caption{IV Statistics by Days to Expiration}
-\label{tab:dte}
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{DTE Bucket} & \textbf{N} & \textbf{Mean IV} & \textbf{Std IV} & \textbf{Volume (M)} \\
-\midrule
-0-7 days & 4,123,456 & 0.298 & 0.234 & 4,521.3 \\
-8-30 days & 6,234,567 & 0.267 & 0.178 & 3,892.1 \\
-31-60 days & 5,123,456 & 0.251 & 0.145 & 2,341.5 \\
-61-90 days & 3,456,789 & 0.242 & 0.132 & 1,892.3 \\
-91-180 days & 3,234,567 & 0.238 & 0.121 & 1,234.5 \\
-180+ days & 2,508,830 & 0.235 & 0.098 & 987.6 \\
-\bottomrule
-\end{tabular}
-\end{table}
+SPY is by far the most liquid options market, with more than double the volume of QQQ and five times that of IWM.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Data Quality Assessment}
 \label{sec:quality}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Missing Data Analysis}
+\subsection{Data Completeness}
 
-\begin{table}[H]
-\centering
-\caption{Data Availability by Column}
-\label{tab:missing}
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Column} & \textbf{Non-Null} & \textbf{Available (\%)} & \textbf{Missing (\%)} \\
-\midrule
-implied\_volatility & 24,456,789 & 99.09 & 0.91 \\
-delta & 24,234,567 & 98.19 & 1.81 \\
-gamma & 24,234,567 & 98.19 & 1.81 \\
-theta & 24,234,567 & 98.19 & 1.81 \\
-vega & 24,234,567 & 98.19 & 1.81 \\
-rho & 23,987,654 & 97.19 & 2.81 \\
-volume & 24,681,665 & 100.00 & 0.00 \\
-open\_interest & 24,543,210 & 99.44 & 0.56 \\
-bid & 24,123,456 & 97.74 & 2.26 \\
-ask & 24,345,678 & 98.64 & 1.36 \\
-\bottomrule
-\end{tabular}
-\end{table}
+All datasets maintain high data quality with minimal missing values:
+\begin{itemize}[noitemsep]
+    \item Implied volatility: $>$99\% available across all datasets
+    \item Greeks (delta, gamma, theta, vega): $>$98\% available
+    \item Volume and open interest: 100\% available
+    \item Bid-ask quotes: $>$97\% available
+\end{itemize}
 
 \subsection{Data Anomalies}
 
-Potential data quality issues identified:
+Potential data quality issues identified (consistent across datasets):
 \begin{itemize}[noitemsep]
-    \item IV $>$ 5.0: 0.02\% of records (extreme values during illiquid periods)
-    \item Negative theta for calls: 0.01\% (near-dividend dates)
-    \item Zero bid-ask spread: 0.05\% (stale quotes)
-    \item Put-call parity violations $>$ 1\%: 0.12\% of option pairs
+    \item IV $>$ 5.0: $<$0.1\% of records (extreme values during illiquid periods)
+    \item Zero bid-ask spread: $<$0.1\% (stale quotes)
+    \item Negative open interest: 0\% (validated)
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -388,16 +636,18 @@ The dataset supports various feature engineering approaches:
     \item \textbf{Cross-sectional features}: Smile slope, curvature, term slope
     \item \textbf{Historical features}: Rolling IV, realized vol ratios
     \item \textbf{Market microstructure}: Bid-ask spread, volume ratios
+    \item \textbf{Cross-asset features}: IV spreads between SPY/IWM/QQQ
 \end{enumerate}
 
 \subsection{Sample Size Considerations}
 
-With 24.7 million records:
+With over 53 million records across three underlyings:
 \begin{itemize}[noitemsep]
     \item Sufficient for deep learning approaches
     \item Supports temporal train/validation/test splits
     \item Enables regime-specific model training
     \item Allows for extensive cross-validation
+    \item Supports transfer learning across underlyings
 \end{itemize}
 
 \subsection{Potential Modeling Targets}
@@ -407,7 +657,8 @@ With 24.7 million records:
     \item \textbf{Surface interpolation}: Fill missing strikes/maturities
     \item \textbf{Smile dynamics}: Model evolution of smile parameters
     \item \textbf{Option pricing}: Direct price prediction
-    \item \textbf{Arbitrage detection}: Identify mispriced options
+    \item \textbf{Cross-asset modeling}: Predict IV relationships between underlyings
+    \item \textbf{Regime detection}: Identify market stress periods
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -419,63 +670,15 @@ This dataset provides a comprehensive foundation for research in volatility mode
 
 Key dataset strengths:
 \begin{itemize}[noitemsep]
-    \item Large sample size (24.7M records) suitable for deep learning
+    \item Large combined sample size (53M+ records) suitable for deep learning
+    \item Three complementary ETFs covering different market segments
     \item Complete option Greeks for feature engineering
     \item High temporal resolution enabling time series analysis
     \item Coverage of multiple volatility regimes
     \item High data quality with minimal missing values
+    \item Cross-asset analysis capabilities for correlation studies
 \end{itemize}
 
 The dataset is suitable for developing and benchmarking machine learning models for implied volatility surface modeling, contributing to the growing literature on data-driven approaches to derivative pricing.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Appendix
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\appendix
-
-\section{Figures}
-\label{app:figures}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/iv_time_series.pdf}
-\caption{SPY Implied Volatility Time Series (2008-2025). The shaded area represents the spread between call and put average implied volatilities.}
-\label{fig:iv_ts}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/iv_distribution.pdf}
-\caption{Distribution of Implied Volatility by Option Type. Left: Histogram showing density. Right: Box plot comparison.}
-\label{fig:iv_dist}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/volatility_smile.pdf}
-\caption{Volatility Smile for Recent Trading Day. Shows the characteristic negative skew in equity index options.}
-\label{fig:smile}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/volume_analysis.pdf}
-\caption{Volume and Open Interest Analysis. Top left: Daily volume. Top right: Open interest. Bottom left: Put-call ratio. Bottom right: Annual volume.}
-\label{fig:volume}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/greeks_distribution.pdf}
-\caption{Distribution of Option Greeks. Extreme values clipped for visualization.}
-\label{fig:greeks}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figures/term_structure.pdf}
-\caption{Implied Volatility Term Structure. Shows average IV by days to expiration with standard deviation band.}
-\label{fig:term}
-\end{figure}
 
 \end{document}
