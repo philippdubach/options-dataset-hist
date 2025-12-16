@@ -1,5 +1,10 @@
 # Historic Options Dataset
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Data Format](https://img.shields.io/badge/Format-SQLite%20%7C%20Parquet-blue.svg)](#data-formats)
+[![Records](https://img.shields.io/badge/Records-53.4M-green.svg)](#dataset-overview)
+
+
 This repository contains historical options data for three major U.S. equity ETFs: SPY (S&P 500), IWM (Russell 2000), and QQQ (Nasdaq-100). The dataset spans January 2008 to December 2025 and includes over 53 million option contracts with Greeks, implied volatilities, and market microstructure variables.
 
 ## Overview
