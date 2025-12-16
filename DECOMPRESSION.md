@@ -1,139 +1,90 @@
-# Decompression Instructions
+# Decompression
 
-The SQLite database is compressed using Zstandard (zstd) for efficient storage and fast decompression.
+The SQLite databases are compressed with Zstandard (zstd). This document describes how to decompress them.
 
 ## Files
 
-| Compressed File | Decompressed Output | Size |
-|-----------------|---------------------|------|
-| `data/spy_options.db.zst` | `data/spy_options.db` | 9 GB |
+| Dataset | Compressed | Decompressed |
+|---------|------------|--------------|
+| SPY | 1.5 GB | 9 GB |
+| IWM | 812 MB | 4.8 GB |
+| QQQ | 965 MB | 5.6 GB |
+| Total | 3.3 GB | 19.4 GB |
 
-## Decompression Methods
+Ensure you have at least 20 GB of free disk space before decompressing all databases.
 
-### Command Line (zstd)
+## Command Line
 
-macOS (Homebrew):
+### macOS
+
 ```bash
 brew install zstd
 cd data/
 zstd -d spy_options.db.zst
+zstd -d iwm_options.db.zst
+zstd -d qqq_options.db.zst
 ```
 
-Linux (Debian/Ubuntu):
+macOS 15 and later can decompress zst files natively in Finder.
+
+### Linux
+
 ```bash
+# Debian/Ubuntu
 sudo apt-get install zstd
-cd data/
-zstd -d spy_options.db.zst
-```
 
-Linux (Fedora/RHEL):
-```bash
+# Fedora/RHEL
 sudo dnf install zstd
+
 cd data/
 zstd -d spy_options.db.zst
+zstd -d iwm_options.db.zst
+zstd -d qqq_options.db.zst
 ```
 
-Windows (Chocolatey):
+### Windows
+
 ```powershell
+# Using Chocolatey
 choco install zstandard
-cd data
-zstd -d spy_options.db.zst
-```
 
-Windows (Scoop):
-```powershell
+# Using Scoop
 scoop install zstd
+
 cd data
 zstd -d spy_options.db.zst
+zstd -d iwm_options.db.zst
+zstd -d qqq_options.db.zst
 ```
 
-### Python
+7-Zip version 21.01 and later supports zst files through the GUI.
+
+## Python
 
 ```python
 import zstandard as zstd
-import pathlib
 
-compressed_path = pathlib.Path('data/spy_options.db.zst')
-output_path = pathlib.Path('data/spy_options.db')
+def decompress(name):
+    dctx = zstd.ZstdDecompressor()
+    with open(f'data/{name}.zst', 'rb') as fin:
+        with open(f'data/{name}', 'wb') as fout:
+            dctx.copy_stream(fin, fout)
 
-dctx = zstd.ZstdDecompressor()
-with open(compressed_path, 'rb') as ifh:
-    with open(output_path, 'wb') as ofh:
-        dctx.copy_stream(ifh, ofh)
-
-print(f"Decompressed to {output_path}")
+for db in ['spy_options.db', 'iwm_options.db', 'qqq_options.db']:
+    decompress(db)
 ```
 
-Install the package first:
-```bash
-pip install zstandard
-```
-
-### 7-Zip (GUI)
-
-1. Download and install [7-Zip](https://www.7-zip.org/) (version 21.01 or later)
-2. Right-click on `spy_options.db.zst`
-3. Select 7-Zip, then Extract Here
-
-### macOS (Sequoia and later)
-
-macOS 15+ has native zstd support. Double-click `spy_options.db.zst` in Finder to decompress.
+Install the zstandard package with `pip install zstandard`.
 
 ## Verification
 
-After decompression, verify file integrity:
-
 ```bash
-# Check file size (should be approximately 9 GB)
-ls -lh data/spy_options.db
-
-# Verify database integrity
 sqlite3 data/spy_options.db "PRAGMA integrity_check;"
-
-# Quick sanity check
 sqlite3 data/spy_options.db "SELECT COUNT(*) FROM options_data;"
-# Expected: 24,681,665
 ```
 
-### SHA256 Checksums
+Expected record counts: SPY 24.7M, IWM 13.4M, QQQ 15.3M.
 
-```bash
-# Compressed file
-sha256sum data/spy_options.db.zst
-# cc66ac015dfc196c3621f4cc76c9a538835a213ee082b2ce95f1201964409efb
+## Alternative
 
-# Decompressed file
-sha256sum data/spy_options.db
-# 933b4c9cfe1e05fbb6ae14c22862dbb18e13a9c4d7bbb3b9beb2f3fbf1fd58ee
-```
-
-## Quick Start After Decompression
-
-### Python
-```python
-import sqlite3
-conn = sqlite3.connect('data/spy_options.db')
-cursor = conn.cursor()
-cursor.execute("SELECT COUNT(*) FROM options_data")
-print(f"Total records: {cursor.fetchone()[0]:,}")
-conn.close()
-```
-
-### Command Line
-```bash
-sqlite3 data/spy_options.db "SELECT date, COUNT(*) FROM options_data GROUP BY date ORDER BY date DESC LIMIT 5;"
-```
-
-### DuckDB with Parquet (no decompression needed)
-```python
-import duckdb
-result = duckdb.query("SELECT COUNT(*) FROM 'data/parquet/*.parquet'")
-print(result)
-```
-
-## Notes
-
-- Ensure at least 10 GB of free disk space before decompressing
-- Decompression typically takes 1-3 minutes depending on hardware
-- The compressed file can be deleted after decompression to save space
-- For columnar access, use the parquet files in `data/parquet/` which require no decompression
+The Parquet files in `data/parquet_*/` do not require decompression and can be loaded directly with pandas or polars. This format is suitable for most analytical workflows.

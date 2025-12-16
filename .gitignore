@@ -1,14 +1,19 @@
-# Uncompressed database (users decompress locally)
-data/spy_options.db
+# Uncompressed databases (users decompress locally)
 data/*.db
 !data/*.db.zst
 
-# Python
+# Scripts (not distributed)
+scripts/
+
+# Python environment
 __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
 venv/
+*.egg
+dist/
+build/
 
 # LaTeX auxiliary files
 *.aux
@@ -20,12 +25,31 @@ venv/
 *.synctex.gz
 *.bbl
 *.blg
+*.nav
+*.snm
+*.vrb
+
+# Report figures (included in PDF)
+reports/figures/
+
+# Generated statistics
+reports/dataset_statistics.json
 
 # IDE
 .idea/
 .vscode/
 *.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Backup files
+*_old.md
+*.bak
+
+# Jupyter
+.ipynb_checkpoints/
